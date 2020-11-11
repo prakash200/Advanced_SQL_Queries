@@ -1,0 +1,165 @@
+create schema superstores ;
+use superstores ;
+
+/*-----1. Write a query to display the Customer_Name and Customer Segment using alias 
+name “Customer Name", "Customer Segment" from table Cust_dimen.   */-----
+
+select Customer_Name as "Customer Name" , Customer_Segment as "Customer Segment"
+from cust_dimen ;
+
+/*-----2. Write a query to find all the details of the customer from the table cust_dimen 
+order by desc.  */----
+
+select *
+from cust_dimen 
+order by Customer_Name   desc ;
+
+/*-----3. Write a query to get the Order ID , Order date from table orders_dimen where 
+‘Order Priority’ is high.  */-----
+
+select Ord_id , Order_Date 
+from orders_dimen
+where Order_Priority =  "HIGH" ;
+
+/*-----4. Find the total and the average sales (display total_sales and avg_sales)  */-----
+
+select sum(Sales) as Total_Sales  , count(Sales) as "N.O_Sales" , avg(Sales) as Avg_Sales  
+from market_fact ;
+
+/*5. Write a query to get the maximum and minimum sales from maket_fact table.*/-----
+
+select max(Sales) as Maximum_Sales , min(Sales) as Minimum_Sales
+from market_fact ;
+
+/*6. Display the number of customers in each region in decreasing order of 
+no_of_customers. The result should contain columns Region, no_of_customers. */-----
+
+select Region , count(Cust_id) as Total_customers 
+from cust_dimen
+group by Region 
+order by Total_customers desc ;
+
+/*7. Find the region having maximum customers (display the region name and 
+max(no_of_customers)  */-----
+
+select a.Region , max(a.Total_customers) as Customers
+from (
+select Region  , count(Cust_id) as Total_customers 
+from cust_dimen
+group by Region 
+order by Total_customers desc ) as a ;
+
+/*8. Find all the customers from Atlantic region who have ever purchased ‘TABLES’ 
+and the number of tables purchased (display the customer name, no_of_tables 
+purchased)   */-----
+
+select a.Customer_Name as "Customer name",  a.Region as Region , c.Product_Sub_Category "Sub Category", b.Order_Quantity as "Quantity" 
+from cust_dimen a
+left join  market_fact b 
+on a.Cust_id = b.Cust_id 
+left join prod_dimen c
+on b.Prod_id=c.Prod_id 
+where (a.Region = "ATLANTIC") and (c.Product_Sub_Category = "Tables") 
+order by Quantity desc ;
+
+/*9. Find all the customers from Ontario province who own Small Business. (display 
+the customer name, no of small business owners)   */-----
+
+select  Customer_Name , Customer_Segment , Province 
+from cust_dimen
+where (Province = "ONTARIO") and (Customer_Segment = "SMALL BUSINESS") ;
+
+/*-----10. Find the number and id of products sold in decreasing order of products sold 
+(display product id, no_of_products sold)   */-----
+
+select Prod_id , sum(Order_Quantity) as "No_of_products"
+from market_fact 
+group by Prod_id 
+order by sum(Order_Quantity) desc ;
+
+/*-----11. Display product Id and product sub category whose produt category belongs to 
+Furniture and Technlogy. The result should contain columns product id, product 
+sub category.   */-----
+
+select a.Prod_id , b.Product_Sub_Category , b.Product_Category
+from market_fact a
+left join prod_dimen b
+on a.Prod_id = b.Prod_id 
+where (Product_Category = "TECHNOLOGY") or (Product_Category = "FURNITURE") ;
+
+/*12. Display the product categories in descending order of profits (display the product 
+category wise profits i.e. product_category, profits)?   */-----
+
+select b.Product_Category "Product Category" , sum(a.Profit) profit 
+from market_fact a
+left join prod_dimen b
+on a.Prod_id = b.Prod_id 
+group by b.Product_Category
+order by Profit desc ;
+
+/*13. Display the product category, product sub-category and the profit within each 
+subcategory in three columns. */-----
+
+select b.Product_Category , b.Product_Sub_Category ,  sum(a.Profit) profit 
+from market_fact a
+left join prod_dimen b
+on a.Prod_id = b.Prod_id 
+group by b.Product_Sub_Category
+order by Product_Category ;
+
+/*14. Display the order date, order quantity and the sales for the order.  */-----
+
+select b.Order_Date , sum(a.Order_Quantity) "Order Quantity" , sum(a.sales) sales
+from market_fact a
+left join orders_dimen b
+on a.Ord_id = b.Ord_id
+group by b.Order_Date  
+order by sum(a.sales) desc ;
+
+/*-----15. Display the names of the customers whose name contains the 
+ i) Second letter as ‘R’
+ ii) Fourth letter as ‘D’   */-----
+ 
+ select Customer_Name  from cust_dimen 
+ where Customer_Name like "_R%"  ;
+ 
+ select Customer_Name  from cust_dimen 
+ where Customer_Name like "___D%"  ;
+ 
+ /*16. Write a SQL query to to make a list with Cust_Id, Sales, Customer Name and 
+their region where sales are between 1000 and 5000.   */----
+
+select a.cust_id as "Customer_id" , b.Customer_Name , b.Region , sum(a.sales) sales 
+from market_fact a
+left join cust_dimen b
+on a.cust_id = b.cust_id 
+group by a.cust_id
+having sum(a.Sales) between 1000 and  5000  order by sum(a.sales);
+
+/*17. Write a SQL query to find the 3rd highest sales.   */-----
+
+select a.cust_id , a.sales , a.rnk "rank"
+from (
+select cust_id , sum(sales) sales ,	dense_rank() over (order by sum(sales) desc ) as rnk
+from market_fact group by cust_id ) a
+where a.rnk = 3 ;
+
+/*-----18. Where is the least profitable product subcategory shipped the most? For the least profitable product sub-category,
+display the region-wise no_of_shipments and the profit made in each region in decreasing order of profits (i.e. region, 
+no_of_shipments, profit_in_each_region)  → Note: You can hardcode the name of the least profitable product subcategory */-----
+
+select p.product_sub_category ,c.region , count(ship_id) as "No_of_shipments" , sum(m.profit) as profit
+from market_fact m
+left join cust_dimen c
+on m.Cust_id = c.Cust_id
+left join prod_dimen p 
+on m.prod_id = p.prod_id 
+where p.product_sub_category = (
+	select p.product_sub_category 
+	from market_fact m
+	join prod_dimen p
+	on m.prod_id = p.prod_id
+	group by p.product_sub_category  order by sum(m.profit) limit 1 )  
+group by c.region 
+order by sum(m.profit) desc ;
+
