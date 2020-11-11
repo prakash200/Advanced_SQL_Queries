@@ -1,1 +1,2 @@
 # Advanced_SQL_Queries
+Here are Some of the Advanced_SQl Queries . These Queries are wrriten in #MYSQLWORKBENCH . In this i have created a sql database called "SUPERSTORES" from the XLS files or Excel files . In these Queries i have used  JOINTS and also  I have also written Nested Queries  . Joints combines columns from one or more tables in a relational database. It creates a set that can be saved as a table or used as it is .
